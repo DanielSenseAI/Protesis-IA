@@ -57,11 +57,13 @@ def main() -> int:
 
     import pandas as pd
     idx = pd.read_csv(work / "db1" / "sessions_index.csv")
-    assert set(idx[idx.included_in_databases].participant) == {"S01", "S07", "S00"}, idx
+    inc = idx[idx.included_in_databases]
+    assert set(inc.participant) == {"S01", "S07"}, idx
+    assert sorted(inc[inc.participant == "S07"].participant_session) == [1, 2], idx
     assert idx.tag.is_unique, idx
     assert list(idx[~idx.included_in_databases].session_dir) == ["sS05_n1_20260926_094549"], idx
     assert (idx[idx.included_in_databases].sweeps_in_databases == 49).all()
-    print("\nindex: 3 complete sessions (S01; S07 via alias; S00 = second 1 Oct session), 1 aborted start excluded, 49 sweeps each: OK")
+    print("\nindex: 3 complete sessions (S01; S07 twice: alias + participant_labels.csv), 1 aborted start excluded, 49 sweeps each: OK")
 
     print("\nrebuilding to check determinism ...")
     assert build_databases.main(["--sessions", str(sessions), "--out", str(work / "db2")]) == 0

@@ -46,14 +46,7 @@ d[d.phase == "grasp"].groupby(["trial", "grasp_name"]).raw_E1.std()
 | Label | Folder | Notes |
 |---|---|---|
 | S01 to S06 | `sS01 ... sS06_n1_20260926_*` | 26 Sep 2026. S01 was recorded under code S00 and the folder was renamed to S01 afterwards. |
-| S07 | `sS00_n1_20261001_173409` | 1 Oct 2026, recorded under the monitor's default code S00. The analysis code labels it S07 (`s26_common._DATASETS["s26-01"]`). |
-| S00 | `sS00_n1_20261001_174831` | 1 Oct 2026, second complete session of the day, also recorded under the default code S00 and kept as S00 at the operator's instruction. The participant first recorded as S00 on 26 Sep is S01. |
-
-Whether the two 1 Oct sessions are the same person is not recorded in the data; the authors should state it here.
-
-`participants.csv` lists the mapping used: the article label, the folder code, and the subject code
-inside each `metadata.json` (`metadata_subject`), which can differ from the folder code where a folder was
-renamed. Names, ages and the subject sheet are not part of this bundle; folders carry codes only.
+| S07 | `sS00_n1_20261001_173409` and `sS00_n1_20261001_174831` | 1 Oct 2026, two sessions of the same participant (17:34 and 17:48), both recorded under the monitor's default code S00. The analysis code labels the first S07 (`s26_common._DATASETS["s26-01"]`); the second is assigned S07 by the operator in `tools/participant_labels.csv`. |
 
 Two recordings on 26 Sep (S05, S06) were aborted starts that the operator repeated within 3 minutes.
 They are kept in `raw/` but are not in the databases: a session is included only if it has all 42

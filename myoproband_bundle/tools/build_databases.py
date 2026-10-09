@@ -64,7 +64,17 @@ def _args(argv):
     ap.add_argument("--max-age-ms-env", type=float, default=60.0,
                     help="envelope is blank where the newest sample is older than this (3 periods at 50 Hz)")
     ap.add_argument("--only", nargs="*", default=None, help="restrict to these session folder names")
+    ap.add_argument("--labels", type=Path, default=HERE / "participant_labels.csv",
+                    help="CSV (session_dir,participant,note) that fixes a participant label by hand; "
+                         "it wins over the analysis alias table and the folder code")
     return ap.parse_args(argv)
+
+
+def load_labels(path: Path) -> dict:
+    if not path.is_file():
+        return {}
+    df = pd.read_csv(path, dtype=str).fillna("")
+    return {r.session_dir: (r.participant, r.note) for r in df.itertuples()}
 
 
 # ----------------------------------------------------------------- resampling
@@ -353,10 +363,11 @@ def main(argv=None) -> int:
     if not paths:
         sys.exit(f"no session folders (raw.bin) for dataset {args.dataset} under {args.sessions}")
     out = args.out
+    labels = load_labels(args.labels)
     index, parts = [], []
     for path in paths:
         x = S.load26(path)
-        participant = x.subject
+        participant = labels[path.name][0] if path.name in labels else x.subject
         complete = len(x.trials) == N_TRIALS
         row = dict(participant=participant, session_dir=path.name, folder_code=path.name.split("_")[0],
                    metadata_subject=x.s.meta.get("subject", ""),
@@ -370,8 +381,9 @@ def main(argv=None) -> int:
         row["tag"] = session_tag(participant, path.name)
         parts.append(dict(participant=participant, folder_code=row["folder_code"],
                           metadata_subject=row["metadata_subject"], session_dir=path.name,
-                          label_origin="analysis alias (s26_common._DATASETS)" if path.name in S.CFG["alias"]
-                          else "folder name"))
+                          label_origin=("operator (participant_labels.csv): " + labels[path.name][1])
+                          if path.name in labels else
+                          "analysis alias (s26_common._DATASETS)" if path.name in S.CFG["alias"] else "folder name"))
         if not complete:
             row.update(rows_raw_1khz=0, rows_env_50hz=0,
                        note=f"excluded: {len(x.trials)} trials, a complete session has {N_TRIALS}")
@@ -386,16 +398,18 @@ def main(argv=None) -> int:
         index.append(row)
         print(f"{path.name} -> {participant}: {n_raw} rows @1 kHz, {n_env} @50 Hz, "
               f"{len(sweeps)} sweeps {src}")
-    done = [r for r in index if r["included_in_databases"]]
+    done = sorted((r for r in index if r["included_in_databases"]), key=lambda r: r["start"])
     for lab in sorted({r["participant"] for r in done}):
-        n = sum(r["participant"] == lab for r in done)
-        if n > 1:
-            print(f"WARNING: participant {lab} has {n} complete sessions "
-                  f"({[r['session_dir'] for r in done if r['participant'] == lab]}); files are kept apart by date/time.")
+        mine = [r for r in done if r["participant"] == lab]
+        for k, r in enumerate(mine, start=1):
+            r["participant_session"] = k
+        if len(mine) > 1:
+            print(f"note: participant {lab} has {len(mine)} complete sessions "
+                  f"({[r['session_dir'] for r in mine]}); files are kept apart by date and time.")
     for r in done:
         if r["participant"] == "S00":
-            print(f"note: {r['session_dir']} is labelled S00 (its folder code, kept as S00 by the operator). "
-                  f"The participant first recorded as S00 on 26 Sep was renamed S01; see participants.csv.")
+            print(f"WARNING: {r['session_dir']} is labelled S00, the monitor's default code: it has no alias in "
+                  f"s26_common._DATASETS and no row in {args.labels.name}. Check participants.csv.")
     pd.DataFrame(index).sort_values(["start", "session_dir"]).to_csv(out / "sessions_index.csv", index=False,
                                                                        lineterminator="\n")
     pd.DataFrame(parts).sort_values("session_dir").to_csv(out / "participants.csv", index=False,

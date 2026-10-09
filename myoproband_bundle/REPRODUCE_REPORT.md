@@ -26,9 +26,11 @@ python s26_run_all.py --dataset s26-01 --from s26_01  # the same plus the 1 Oct 
 python s26_run_all.py --list                           # the steps
 ```
 
-For `--dataset s26-01`, the second 1 Oct session (`sS00_n1_20261001_174831`, label S00) is not known to
-`s26_common._DATASETS`: add `"S00"` to the `order` list of `"s26-01"` there before running the figure scripts, or
-they cannot place that participant. The published report uses the `s26` dataset and does not need this.
+For `--dataset s26-01`: the analysis code knows only `sS00_n1_20261001_173409` (label S07). The second 1 Oct session
+of the same participant, `sS00_n1_20261001_174831`, is not in its alias table, so it would be read as a participant
+"S00". Either add `"sS00_n1_20261001_174831": "S07"` to the `alias` of `"s26-01"` in `s26_common._DATASETS`, or
+leave it out; the analysis scripts assume one session per participant, so a second session may be counted twice.
+This was not tested. The published report uses the `s26` dataset and is not affected.
 
 Tables go to `$EMG8_OUT/data/<dataset>/`, figures to `$EMG8_OUT/figures/<dataset>/`, and the report to
 `$EMG8_OUT/report_<dataset>.html`. Compare against `reference/`.
