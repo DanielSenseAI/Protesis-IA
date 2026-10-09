@@ -386,9 +386,10 @@ def main(argv=None) -> int:
                           "analysis alias (s26_common._DATASETS)" if path.name in S.CFG["alias"] else "folder name"))
         if not complete:
             row.update(rows_raw_1khz=0, rows_env_50hz=0,
-                       note=f"excluded: {len(x.trials)} trials, a complete session has {N_TRIALS}")
+                       note=f"excluded: {len(x.trials)} trials found, a complete session has {N_TRIALS}")
             index.append(row)
-            print(f"{path.name}: {len(x.trials)} trials -> excluded (aborted start)")
+            print(f"{path.name}: {len(x.trials)} trials found, a complete session has {N_TRIALS} -> excluded. "
+                  f"If it should be included, run tools/diagnose_session.py on it first.")
             continue
         n_raw, n_env, sweeps, _ = build_session(x, S, args, out, participant)
         src = pd.Series([r["source"] for r in sweeps]).value_counts().to_dict()
