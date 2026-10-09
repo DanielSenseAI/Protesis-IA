@@ -26,6 +26,10 @@ python s26_run_all.py --dataset s26-01 --from s26_01  # the same plus the 1 Oct 
 python s26_run_all.py --list                           # the steps
 ```
 
+For `--dataset s26-01`, the second 1 Oct session (`sS00_n1_20261001_174831`, label S00) is not known to
+`s26_common._DATASETS`: add `"S00"` to the `order` list of `"s26-01"` there before running the figure scripts, or
+they cannot place that participant. The published report uses the `s26` dataset and does not need this.
+
 Tables go to `$EMG8_OUT/data/<dataset>/`, figures to `$EMG8_OUT/figures/<dataset>/`, and the report to
 `$EMG8_OUT/report_<dataset>.html`. Compare against `reference/`.
 

@@ -394,8 +394,8 @@ def main(argv=None) -> int:
                   f"({[r['session_dir'] for r in done if r['participant'] == lab]}); files are kept apart by date/time.")
     for r in done:
         if r["participant"] == "S00":
-            print(f"WARNING: {r['session_dir']} is complete and labelled S00 (folder code, no alias in "
-                  f"s26_common._DATASETS). S00 was the pre-rename label of {'sS01'}; check participants.csv.")
+            print(f"note: {r['session_dir']} is labelled S00 (its folder code, kept as S00 by the operator). "
+                  f"The participant first recorded as S00 on 26 Sep was renamed S01; see participants.csv.")
     pd.DataFrame(index).sort_values(["start", "session_dir"]).to_csv(out / "sessions_index.csv", index=False,
                                                                        lineterminator="\n")
     pd.DataFrame(parts).sort_values("session_dir").to_csv(out / "participants.csv", index=False,

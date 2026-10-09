@@ -45,6 +45,7 @@ def main() -> int:
     print("generating synthetic sessions ...")
     sy.make_session(sessions, "sS01_n1_20260926_113055", "S01", all_labels=False, rng_seed=1, dropout=(100.0, 101.5))
     sy.make_session(sessions, "sS00_n1_20261001_173409", "S00", all_labels=True, seed=56056, rng_seed=2)
+    sy.make_session(sessions, "sS00_n1_20261001_174831", "S00", all_labels=True, seed=56057, rng_seed=4)
     sy.make_session(sessions, "sS05_n1_20260926_094549", "S05", n_trials=6, rng_seed=3)
 
     print("\nbuilding databases ...")
@@ -56,10 +57,11 @@ def main() -> int:
 
     import pandas as pd
     idx = pd.read_csv(work / "db1" / "sessions_index.csv")
-    assert set(idx[idx.included_in_databases].participant) == {"S01", "S07"}, idx
+    assert set(idx[idx.included_in_databases].participant) == {"S01", "S07", "S00"}, idx
+    assert idx.tag.is_unique, idx
     assert list(idx[~idx.included_in_databases].session_dir) == ["sS05_n1_20260926_094549"], idx
     assert (idx[idx.included_in_databases].sweeps_in_databases == 49).all()
-    print("\nindex: 2 complete sessions (S01, S07 via alias), 1 aborted start excluded, 49 sweeps each: OK")
+    print("\nindex: 3 complete sessions (S01; S07 via alias; S00 = second 1 Oct session), 1 aborted start excluded, 49 sweeps each: OK")
 
     print("\nrebuilding to check determinism ...")
     assert build_databases.main(["--sessions", str(sessions), "--out", str(work / "db2")]) == 0

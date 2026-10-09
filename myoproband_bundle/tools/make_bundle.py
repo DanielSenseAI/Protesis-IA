@@ -79,6 +79,17 @@ def main(argv=None) -> int:
                     help="extra files for the report that are not session folders (see REPRODUCE_REPORT.md)")
     ap.add_argument("--skip-verify", action="store_true")
     a = ap.parse_args(argv)
+    problems = []
+    if not a.sessions.is_dir():
+        problems.append(f"--sessions folder not found: {a.sessions}"
+                        + (f"\n    its parent {a.sessions.parent} exists and contains: "
+                           f"{sorted(q.name for q in a.sessions.parent.iterdir())[:12]}" if a.sessions.parent.is_dir()
+                           else "\n    its parent folder does not exist either"))
+    for flag, f in (("--report", a.report), ("--figures", a.figures), *[("--extras", e) for e in a.extras]):
+        if f is not None and not f.is_file():
+            problems.append(f"{flag} file not found: {f}  (leave the option out if you do not have the file)")
+    if problems:
+        sys.exit("Nothing was copied. Fix these paths and run again:\n  " + "\n  ".join(problems))
     preflight()
 
     stage = a.out / BUNDLE
