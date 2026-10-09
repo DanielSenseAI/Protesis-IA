@@ -57,6 +57,18 @@ def find_folders(src: Path) -> list[Path]:
     return out
 
 
+def preflight() -> None:
+    """Fail early and clearly if the packages cannot be loaded, before copying hundreds of MB."""
+    try:
+        import numpy  # noqa: F401
+        import pandas  # noqa: F401
+    except Exception as exc:                                   # ImportError, or a blocked DLL
+        sys.exit(f"Cannot load numpy/pandas with this Python ({sys.executable}):\n  {type(exc).__name__}: {exc}\n"
+                 "Nothing was copied. Install them (python -m pip install -r requirements.txt), or run this on a "
+                 "computer where pandas works. If Windows reports that an Application Control policy blocked a "
+                 "file, that is a security setting on this PC; use another PC rather than working around it.")
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--sessions", type=Path, required=True, help="the monitor's sessions folder")
@@ -67,6 +79,7 @@ def main(argv=None) -> int:
                     help="extra files for the report that are not session folders (see REPRODUCE_REPORT.md)")
     ap.add_argument("--skip-verify", action="store_true")
     a = ap.parse_args(argv)
+    preflight()
 
     stage = a.out / BUNDLE
     if stage.exists():
@@ -111,7 +124,9 @@ def main(argv=None) -> int:
     print("\nbuilding databases from the copies ...")
     py = sys.executable
     env = {**os.environ, "PYTHONDONTWRITEBYTECODE": "1"}          # keep the staging folder free of .pyc
-    run = lambda *c: subprocess.run([py, "-I", *map(str, c)], check=True, env=env)
+    # No "-I": isolated mode also hides the per-user package folder, which is where pip puts
+    # packages on a Windows Store Python ("Defaulting to user installation").
+    run = lambda *c: subprocess.run([py, *map(str, c)], check=True, env=env)
     run(stage / "tools" / "build_databases.py", "--sessions", stage / "raw" / "sessions",
         "--out", stage / "databases")
     if not a.skip_verify:
